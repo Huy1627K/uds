@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="vi">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>UDS — Unpriced Data Systems</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;700&display=swap"
+			rel="stylesheet" />
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<!-- ============================================================
+     PYTHON BACKEND INTEGRATION MAP
+
+     File frontend:
+     - index.html: chi giu markup va cac id/class de render du lieu.
+     - style.css: chi giu giao dien.
+     - script.js: noi fetch API Python va render len HTML.
+
+     Backend Python can implement cac endpoint sau:
+     1. GET  /api/stock/{ticker}
+        Render vao: #search-result, #res-ticker, #res-name, #res-price,
+                    #res-change, #res-nas, #res-signal
+        JSON: {
+          "ticker":"VCB",
+          "name":"Vietcombank",
+          "price":92500,
+          "change":1.2,
+          "nas_score":82,
+          "nas_5p":8.1,
+          "nas_20p":7.8,
+          "signal":"MUA"
+        }
+
+     2. POST /api/requests
+        Frontend gui: {"ticker":"VCB","type":"nas","timeframe":"20","note":"..."}
+        Python tra: {"id":"REQ-001","status":"received"}
+        Render vao: #req-msg, sau do reload #request-list
+
+     3. GET  /api/requests?limit=8
+        Render vao: #request-list, #pending-count
+        JSON: [{"ticker":"VCB","name":"Vietcombank","status":"pending"}]
+
+     4. GET  /api/market/analysis
+        Render vao: #analysis-date, #analysis-content,
+                    #sig-nas, #sig-trend, #sig-rsi, #sig-macd, #sig-vol, #sig-rec
+        JSON: {
+          "date":"20/04/2026",
+          "content":"<p>Noi dung nhan dinh tu Python/AI.</p>",
+          "signals": {
+            "nas": {"value":"+12.4","state":"up","desc":"Hap thu tot"},
+            "trend": {"value":"TANG","state":"up","desc":"Xu huong chinh"},
+            "rsi": {"value":"58.2","state":"nt","desc":"Trung tinh"},
+            "macd": {"value":"DUONG","state":"up","desc":"MACD tren signal"},
+            "vol": {"value":"+18%","state":"up","desc":"Thanh khoan cao"},
+            "rec": {"value":"THEO DOI","state":"nt","desc":"Cho xac nhan"}
+          }
+        }
+
+     5. GET  /api/nas?date=today&limit=20
+        Render vao: #nas-tbody, #nas-updated
+        JSON: [{
+          "ticker":"VCB",
+          "name":"Vietcombank",
+          "sector":"Ngan hang",
+          "score":82,
+          "nas_5p":8.1,
+          "nas_20p":7.8,
+          "rs":1.2,
+          "signal":"MUA",
+          "updated_at":"2026-04-20T09:15:00"
+        }]
+
+     6. GET  /api/youtube/videos
+        Nen goi YouTube Data API trong Python de khong lo API key tren frontend.
+        Render vao: #youtube-grid
+        JSON: [{"videoId":"abc123","title":"Nhan dinh VNIndex","publishedAt":"2026-04-20T08:30:00","thumbnail":"https://..."}]
+
+     Tat ca logic ket noi nam trong script.js, tim block:
+     "UDS FRONTEND <-> PYTHON BACKEND CONTRACT".
+============================================================ -->
+		<!-- NAV -->
+		<nav>
+			<div class="logo">UDS <span>Unpriced Data Systems</span></div>
+			<ul class="nav-links">
+				<li><a href="#gioi-thieu" class="active">01 / Giới thiệu</a></li>
+				<li><a href="#ma-co-phieu">02 / Mã CP</a></li>
+				<li><a href="#vnindex">03 / VNIndex</a></li>
+				<li><a href="#nas-danh-gia">04 / NAS</a></li>
+			</ul>
+		</nav>
+
+		<!-- HERO -->
+		<section class="hero" id="home">
+			<div class="grid-bg"></div>
+			<div class="hero-text">
+				<div class="hero-badge">
+					<span class="dot-live"></span>Hệ thống dữ liệu chứng khoán Việt Nam
+				</div>
+				<h1>
+					UNPRICED<br /><span class="a">DATA</span><br /><span class="d"
+						>SYSTEMS</span
+					>
+				</h1>
+				<p class="hero-sub">
+					Tích lũy lợi thế giao dịch nhờ chênh lệch thông tin. UDS công nghiệp
+					hóa quy trình phân tích cổ phiếu — từ dữ liệu HOSE/HNX đến báo cáo AI
+					đa ngôn ngữ.
+				</p>
+				<div class="hero-cta">
+					<a href="#nas-danh-gia" class="btn btn-primary">Xem bảng NAS →</a>
+					<a href="#gioi-thieu" class="btn btn-outline">Tìm hiểu UDS</a>
+				</div>
+			</div>
+			<div class="hero-card">
+				<div class="panel">
+					<div class="panel-hd">
+						<h4>Quy trình UDS — 5 bước</h4>
+						<span
+							style="
+								display: flex;
+								align-items: center;
+								gap: 6px;
+								font-family: var(--mono);
+								font-size: 10px;
+								color: var(--accent);
+							"
+							><span class="dot-live"></span>Tự động hoá</span
+						>
+					</div>
+					<div class="panel-bd" style="padding: 0">
+						<div
+							style="
+								padding: 16px 18px;
+								border-bottom: 1px solid var(--border);
+								display: flex;
+								gap: 14px;
+							">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									color: var(--accent);
+									background: rgba(0, 229, 160, 0.08);
+									border: 1px solid rgba(0, 229, 160, 0.2);
+									width: 28px;
+									height: 28px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									flex-shrink: 0;
+								">
+								01
+							</div>
+							<div>
+								<div
+									style="
+										font-family: var(--mono);
+										font-size: 12px;
+										margin-bottom: 3px;
+									">
+									Thu thập dữ liệu nguồn
+								</div>
+								<div style="font-size: 11px; color: var(--muted)">
+									Lệnh mua/bán trực tiếp từ HOSE & HNX
+								</div>
+							</div>
+						</div>
+						<div
+							style="
+								padding: 16px 18px;
+								border-bottom: 1px solid var(--border);
+								display: flex;
+								gap: 14px;
+							">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									color: var(--accent);
+									background: rgba(0, 229, 160, 0.08);
+									border: 1px solid rgba(0, 229, 160, 0.2);
+									width: 28px;
+									height: 28px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									flex-shrink: 0;
+								">
+								02
+							</div>
+							<div>
+								<div
+									style="
+										font-family: var(--mono);
+										font-size: 12px;
+										margin-bottom: 3px;
+									">
+									Định nghĩa & Tính toán NAS
+								</div>
+								<div style="font-size: 11px; color: var(--muted)">
+									Xây dựng chỉ số hấp thụ ròng + Score NAS
+								</div>
+							</div>
+						</div>
+						<div
+							style="
+								padding: 16px 18px;
+								border-bottom: 1px solid var(--border);
+								display: flex;
+								gap: 14px;
+							">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									color: var(--accent);
+									background: rgba(0, 229, 160, 0.08);
+									border: 1px solid rgba(0, 229, 160, 0.2);
+									width: 28px;
+									height: 28px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									flex-shrink: 0;
+								">
+								03
+							</div>
+							<div>
+								<div
+									style="
+										font-family: var(--mono);
+										font-size: 12px;
+										margin-bottom: 3px;
+									">
+									Lọc cổ phiếu tiềm năng
+								</div>
+								<div style="font-size: 11px; color: var(--muted)">
+									Kết hợp NAS + Score NAS + biến động giá Rs
+								</div>
+							</div>
+						</div>
+						<div
+							style="
+								padding: 16px 18px;
+								border-bottom: 1px solid var(--border);
+								display: flex;
+								gap: 14px;
+							">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									color: var(--accent);
+									background: rgba(0, 229, 160, 0.08);
+									border: 1px solid rgba(0, 229, 160, 0.2);
+									width: 28px;
+									height: 28px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									flex-shrink: 0;
+								">
+								04
+							</div>
+							<div>
+								<div
+									style="
+										font-family: var(--mono);
+										font-size: 12px;
+										margin-bottom: 3px;
+									">
+									AI đa tầng tạo báo cáo
+								</div>
+								<div style="font-size: 11px; color: var(--muted)">
+									AI truyền thống + Gen AI → báo cáo đa ngôn ngữ
+								</div>
+							</div>
+						</div>
+						<div style="padding: 16px 18px; display: flex; gap: 14px">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									color: var(--accent);
+									background: rgba(0, 229, 160, 0.08);
+									border: 1px solid rgba(0, 229, 160, 0.2);
+									width: 28px;
+									height: 28px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									flex-shrink: 0;
+								">
+								05
+							</div>
+							<div>
+								<div
+									style="
+										font-family: var(--mono);
+										font-size: 12px;
+										margin-bottom: 3px;
+									">
+									Báo cáo & Lợi thế cạnh tranh
+								</div>
+								<div style="font-size: 11px; color: var(--muted)">
+									Hàng ngàn báo cáo/ngày, thị trường 2 chiều
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<hr class="hr" />
+
+		<!-- S1 — GIỚI THIỆU -->
+		<section id="gioi-thieu">
+			<div class="sec-label">01 — About</div>
+			<h2>GIỚI THIỆU &<br />BỐI CẢNH</h2>
+			<div class="intro-grid" style="margin-bottom: 28px">
+				<div class="intro-block">
+					<h4>UDS Là Gì?</h4>
+					<p>
+						Unpriced Data Systems — hệ thống thông tin dữ liệu hỗ trợ đầu tư và
+						giao dịch chứng khoán tại Việt Nam. Tích lũy lợi thế giao dịch nhờ
+						chênh lệch thông tin và công nghiệp hóa phân tích cổ phiếu.
+					</p>
+				</div>
+				<div class="intro-block">
+					<h4>Chỉ Số Cốt Lõi: NAS</h4>
+					<p>
+						NAS — Net Absorption Strength (Cường độ Hấp thụ Ròng) — đo lường sự
+						chắc chắn trong tổng thể cam kết giao dịch, giúp phân biệt lệnh
+						"cứng" với lệnh dễ hủy.
+					</p>
+				</div>
+				<div class="intro-block">
+					<h4>AI Đa Tầng</h4>
+					<p>
+						Kết hợp AI truyền thống chuẩn hóa dữ liệu và AI tạo sinh (Gen AI) để
+						biên soạn báo cáo chuyên sâu tự động — đa ngôn ngữ, không giới hạn
+						quy mô.
+					</p>
+				</div>
+				<div class="intro-block">
+					<h4>Thị Trường Mục Tiêu</h4>
+					<p>
+						Phục vụ thị trường hai chiều (mua lên & bán khống), hỗ trợ định chế
+						tài chính tự doanh, nhà đầu tư tổ chức và cá nhân tiếp cận phân tích
+						cấp chuyên nghiệp.
+					</p>
+				</div>
+			</div>
+			<div class="context-grid">
+				<div class="context-col intl">
+					<h4>🌐 Quốc Tế</h4>
+					<div class="context-item">
+						<strong>Công nghệ AI & Data:</strong> Xu hướng toàn cầu không thể
+						đảo ngược.
+					</div>
+					<div class="context-item">
+						<strong>Bề dày phát triển:</strong> Hệ thống chỉ báo tối ưu từ hàng
+						trăm năm lịch sử tài chính.
+					</div>
+					<div class="context-item">
+						<strong>Kỹ thuật chuyên sâu:</strong> Chỉ báo ra quyết định từ
+						chuyên gia hàng đầu.
+					</div>
+				</div>
+				<div class="context-col vn">
+					<h4>🇻🇳 Việt Nam</h4>
+					<div class="context-item">
+						<strong>Kỷ nguyên vươn mình:</strong> Trọng tâm khoa học công nghệ.
+					</div>
+					<div class="context-item">
+						<strong>Tiềm năng thị trường:</strong> Mục tiêu nâng hạng thị trường
+						chứng khoán.
+					</div>
+					<div class="context-item">
+						<strong>Bước ngoặt chiến lược:</strong> Triển khai nghiệp vụ bán
+						khống cổ phiếu cơ sở.
+					</div>
+				</div>
+			</div>
+			<div class="legal-box" style="margin-top: 28px">
+				<div style="font-size: 24px; flex-shrink: 0; margin-top: 2px">⚠</div>
+				<div>
+					<h4>Tuyên Bố Miễn Trách Pháp Lý</h4>
+					<p>
+						Tất cả nội dung trên UDS chỉ mang tính chất
+						<strong style="color: var(--text)">tham khảo thông tin</strong>,
+						không phải lời khuyên đầu tư hay tư vấn tài chính. Đầu tư chứng
+						khoán luôn tiềm ẩn rủi ro. Nhà đầu tư tự chịu trách nhiệm về các
+						quyết định của mình. UDS không phải công ty chứng khoán và không
+						được cấp phép tư vấn đầu tư theo quy định pháp luật Việt Nam.
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<hr class="hr" />
+
+		<!-- S2 — MÃ CỔ PHIẾU -->
+		<section id="ma-co-phieu">
+			<div class="sec-label">02 — Stocks</div>
+			<h2>TRA CỨU &<br />YÊU CẦU PHÂN TÍCH</h2>
+			<div class="stock-layout">
+				<div>
+					<!-- SEARCH -->
+					<div class="panel" style="padding: 24px; margin-bottom: 16px">
+						<div style="margin-bottom: 14px">
+							<label
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									letter-spacing: 0.1em;
+									color: var(--muted);
+									text-transform: uppercase;
+								"
+								>Tìm kiếm mã cổ phiếu</label
+							>
+						</div>
+						<div class="search-row">
+							<input
+								id="stock-search-input"
+								class="search-input"
+								type="text"
+								placeholder="Nhập mã CP (VD: VCB, FPT...)" />
+							<button class="search-btn-box" onclick="handleSearch()">
+								Tìm →
+							</button>
+						</div>
+						<div style="margin-bottom: 8px">
+							<label
+								style="
+									font-family: var(--mono);
+									font-size: 10px;
+									letter-spacing: 0.1em;
+									color: var(--muted);
+									text-transform: uppercase;
+								"
+								>Tra nhanh</label
+							>
+						</div>
+						<div class="quick-tags">
+							<button class="qtag" onclick="quickSearch(this)">VCB</button>
+							<button class="qtag" onclick="quickSearch(this)">FPT</button>
+							<button class="qtag" onclick="quickSearch(this)">HPG</button>
+							<button class="qtag" onclick="quickSearch(this)">VIC</button>
+							<button class="qtag" onclick="quickSearch(this)">TCB</button>
+							<button class="qtag" onclick="quickSearch(this)">ACB</button>
+							<button class="qtag" onclick="quickSearch(this)">MWG</button>
+							<button class="qtag" onclick="quickSearch(this)">MSN</button>
+							<button class="qtag" onclick="quickSearch(this)">VNM</button>
+							<button class="qtag" onclick="quickSearch(this)">SSI</button>
+						</div>
+
+						<div id="search-result" class="search-result">
+							<div class="result-card">
+								<div class="result-ticker" id="res-ticker">---</div>
+								<div class="result-name" id="res-name">Đang tải...</div>
+								<div class="result-stats">
+									<div class="result-stat">
+										<div class="lbl">Giá</div>
+										<div class="val" id="res-price">---</div>
+									</div>
+									<div class="result-stat">
+										<div class="lbl">Thay đổi</div>
+										<div class="val" id="res-change">---</div>
+									</div>
+									<div class="result-stat">
+										<div class="lbl">Score NAS</div>
+										<div class="val" id="res-nas">---</div>
+									</div>
+									<div class="result-stat">
+										<div class="lbl">Tín hiệu</div>
+										<div class="val" id="res-signal">---</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- FORM YÊU CẦU -->
+					<div class="request-form">
+						<h4>Gửi yêu cầu phân tích NAS</h4>
+						<div class="field">
+							<label>Mã cổ phiếu</label>
+							<input
+								id="req-ticker"
+								class="form-input"
+								type="text"
+								placeholder="VD: VCB, FPT, HPG"
+								style="
+									background: var(--surface2);
+									border: 1px solid var(--border);
+									color: var(--text);
+									font-family: var(--mono);
+									font-size: 15px;
+									letter-spacing: 0.08em;
+									text-transform: uppercase;
+									padding: 10px 13px;
+									outline: none;
+								" />
+						</div>
+						<div class="two-col">
+							<div class="field">
+								<label>Loại phân tích</label>
+								<select id="req-type" class="form-select">
+									<option value="nas">NAS + Score NAS</option>
+									<option value="ta">Kỹ thuật (TA)</option>
+									<option value="fa">Cơ bản (FA)</option>
+									<option value="full">Báo cáo AI đầy đủ</option>
+								</select>
+							</div>
+							<div class="field">
+								<label>Khung NAS</label>
+								<select id="req-timeframe" class="form-select">
+									<option value="5">5 phiên</option>
+									<option value="10">10 phiên</option>
+									<option value="20">20 phiên</option>
+									<option value="50">50 phiên</option>
+								</select>
+							</div>
+						</div>
+						<div class="field">
+							<label>Ghi chú</label>
+							<textarea
+								id="req-note"
+								class="form-textarea"
+								rows="3"
+								placeholder="Câu hỏi hoặc ngữ cảnh thêm..."
+								style="
+									background: var(--surface2);
+									border: 1px solid var(--border);
+									color: var(--text);
+									font-family: var(--sans);
+									font-size: 14px;
+									padding: 10px 13px;
+									outline: none;
+									resize: none;
+								"></textarea>
+						</div>
+						<button class="btn btn-primary" onclick="submitRequest()">
+							Gửi yêu cầu →
+						</button>
+						<div id="req-msg" class="form-msg"></div>
+					</div>
+				</div>
+
+				<!-- DANH SÁCH YÊU CẦU -->
+				<div class="req-panel">
+					<h4>
+						Yêu cầu gần đây
+						<span
+							class="badge badge-green"
+							id="pending-count"
+							style="display: none"
+							>0 đang chờ</span
+						>
+					</h4>
+					<div id="request-list">
+						<div
+							style="
+								padding: 20px 0;
+								text-align: center;
+								font-family: var(--mono);
+								font-size: 11px;
+								color: var(--muted);
+							">
+							Chưa có yêu cầu nào
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<hr class="hr" />
+
+		<!-- S3 — VNINDEX + YOUTUBE -->
+		<section id="vnindex">
+			<div class="sec-label">03 — Market</div>
+			<h2>PHÂN TÍCH &<br />NHẬN ĐỊNH VNINDEX</h2>
+
+			<div class="analysis-layout">
+				<!-- NHẬN ĐỊNH TEXT -->
+				<div class="analysis-text">
+					<div class="panel-hd">
+						<h4>Nhận định hôm nay</h4>
+						<span class="analysis-date" id="analysis-date">-- / -- / ----</span>
+					</div>
+					<div id="analysis-content">
+						<div
+							style="
+								padding: 40px 22px;
+								text-align: center;
+								font-family: var(--mono);
+								font-size: 11px;
+								color: var(--muted);
+							">
+							Nhận định chưa được cập nhật hôm nay.<br />
+							<span
+								style="color: var(--accent); margin-top: 6px; display: block"
+								>Vui lòng quay lại sau 8:30 sáng.</span
+							>
+						</div>
+					</div>
+				</div>
+
+				<!-- SIGNALS -->
+				<div class="signals-panel">
+					<div class="panel-hd"><h4>Tín hiệu kỹ thuật</h4></div>
+					<div class="sig-item">
+						<div class="sig-lbl">NAS Toàn Thị Trường</div>
+						<div class="sig-val up" id="sig-nas">---</div>
+						<div class="sig-desc" id="sig-nas-desc">Chờ dữ liệu</div>
+					</div>
+					<div class="sig-item">
+						<div class="sig-lbl">Xu hướng chính</div>
+						<div class="sig-val up" id="sig-trend">---</div>
+						<div class="sig-desc" id="sig-trend-desc">Chờ dữ liệu</div>
+					</div>
+					<div class="sig-item">
+						<div class="sig-lbl">RSI (14)</div>
+						<div class="sig-val nt" id="sig-rsi">---</div>
+						<div class="sig-desc" id="sig-rsi-desc">Chờ dữ liệu</div>
+					</div>
+					<div class="sig-item">
+						<div class="sig-lbl">MACD</div>
+						<div class="sig-val up" id="sig-macd">---</div>
+						<div class="sig-desc" id="sig-macd-desc">Chờ dữ liệu</div>
+					</div>
+					<div class="sig-item">
+						<div class="sig-lbl">Khối lượng</div>
+						<div class="sig-val up" id="sig-vol">---</div>
+						<div class="sig-desc" id="sig-vol-desc">Chờ dữ liệu</div>
+					</div>
+					<div class="sig-item">
+						<div class="sig-lbl">Khuyến nghị UDS</div>
+						<div class="sig-val up" id="sig-rec">---</div>
+						<div class="sig-desc" id="sig-rec-desc">Chờ dữ liệu</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- YOUTUBE SECTION -->
+			<div style="margin-top: 40px">
+				<div class="yt-section-label">Phân tích video mới nhất</div>
+				<div id="youtube-grid">
+					<div class="yt-card">
+						<div class="yt-thumb" style="background: var(--surface2)">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 11px;
+									color: var(--muted);
+								">
+								Video 1
+							</div>
+							<div class="play-btn">▶</div>
+						</div>
+						<div class="yt-info">
+							<div class="yt-title" style="color: var(--muted)">
+								Nhận định thị trường — chờ kết nối YouTube API
+							</div>
+							<div class="yt-date">-- / -- / ----</div>
+						</div>
+					</div>
+					<div class="yt-card">
+						<div class="yt-thumb" style="background: var(--surface2)">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 11px;
+									color: var(--muted);
+								">
+								Video 2
+							</div>
+							<div class="play-btn">▶</div>
+						</div>
+						<div class="yt-info">
+							<div class="yt-title" style="color: var(--muted)">
+								Phân tích cổ phiếu — chờ kết nối YouTube API
+							</div>
+							<div class="yt-date">-- / -- / ----</div>
+						</div>
+					</div>
+					<div class="yt-card">
+						<div class="yt-thumb" style="background: var(--surface2)">
+							<div
+								style="
+									font-family: var(--mono);
+									font-size: 11px;
+									color: var(--muted);
+								">
+								Video 3
+							</div>
+							<div class="play-btn">▶</div>
+						</div>
+						<div class="yt-info">
+							<div class="yt-title" style="color: var(--muted)">
+								Điểm NAS tuần này — chờ kết nối YouTube API
+							</div>
+							<div class="yt-date">-- / -- / ----</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- YOUTUBE MODAL -->
+		<div class="yt-modal" id="yt-modal" onclick="closeYT(event)">
+			<div class="yt-modal-inner">
+				<div class="yt-modal-close" onclick="closeYT()">✕ ĐÓNG</div>
+				<iframe id="yt-iframe" src="" allowfullscreen allow="autoplay"></iframe>
+			</div>
+		</div>
+
+		<hr class="hr" />
+
+		<!-- S4 — NAS -->
+		<section id="nas-danh-gia">
+			<div class="sec-label">04 — NAS Rating</div>
+			<h2>CHỈ SỐ NAS &<br />BẢNG ĐÁNH GIÁ</h2>
+
+			<div class="nas-cards">
+				<div class="nas-card">
+					<div class="nas-card-icon" style="color: var(--accent)">NAS</div>
+					<h4>Net Absorption Strength</h4>
+					<p>
+						Cường độ Hấp thụ Ròng — đo lường sự chắc chắn trong tổng thể cam kết
+						giao dịch, lọc ra lệnh "cứng" thực sự.
+					</p>
+				</div>
+				<div class="nas-card">
+					<div class="nas-card-icon" style="color: var(--accent2)">SCR</div>
+					<h4>Score NAS</h4>
+					<p>
+						Xếp hạng ưu tiên so sánh độ hấp thụ của từng cổ phiếu với toàn thị
+						trường trong khung 5, 10, 20, 50 phiên.
+					</p>
+				</div>
+				<div class="nas-card">
+					<div class="nas-card-icon" style="color: var(--warn)">Rs</div>
+					<h4>Biến Động Giá</h4>
+					<p>
+						Kết hợp NAS + Score NAS + Rs để xác định cổ phiếu tối ưu cho chiến
+						lược mua lên hoặc bán khống.
+					</p>
+				</div>
+			</div>
+
+			<div class="nas-signals">
+				<div class="nas-sig pos">
+					<h5>NAS Dương (+)</h5>
+					<p>
+						Cung được hấp thụ tốt hơn. Phe Mua chiếm ưu thế — xu hướng tăng rõ
+						nét.
+					</p>
+				</div>
+				<div class="nas-sig neg">
+					<h5>NAS Âm (−)</h5>
+					<p>
+						Cầu được hấp thụ tốt hơn. Phe Bán áp đảo — rủi ro giảm giá, cơ hội
+						bán khống.
+					</p>
+				</div>
+				<div class="nas-sig neu">
+					<h5>NAS Cân Bằng (~0)</h5>
+					<p>
+						Cân bằng giữa mua và bán. Thị trường tích lũy — chờ tín hiệu xác
+						nhận.
+					</p>
+				</div>
+			</div>
+
+			<div class="tf-pills">
+				<div class="tf-pill">
+					<div class="tf-l">NAS Khung</div>
+					<div class="tf-n">5</div>
+					<div class="tf-d">phiên — Ngắn hạn</div>
+				</div>
+				<div class="tf-pill">
+					<div class="tf-l">NAS Khung</div>
+					<div class="tf-n">10</div>
+					<div class="tf-d">phiên — Ngắn-trung</div>
+				</div>
+				<div class="tf-pill">
+					<div class="tf-l">NAS Khung</div>
+					<div class="tf-n">20</div>
+					<div class="tf-d">phiên — Trung hạn</div>
+				</div>
+				<div class="tf-pill">
+					<div class="tf-l">NAS Khung</div>
+					<div class="tf-n">50</div>
+					<div class="tf-d">phiên — Dài hạn</div>
+				</div>
+			</div>
+
+			<div class="tbl-controls">
+				<h4>Bảng xếp hạng Score NAS</h4>
+				<span
+					style="font-family: var(--mono); font-size: 10px; color: var(--muted)"
+					id="nas-updated"
+					>Cập nhật: chờ dữ liệu</span
+				>
+			</div>
+
+			<div class="tbl-wrap">
+				<table class="nas-tbl">
+					<thead>
+						<tr>
+							<th>Mã CP</th>
+							<th>Tên công ty</th>
+							<th>Ngành</th>
+							<th>Score NAS</th>
+							<th>NAS 5P</th>
+							<th>NAS 20P</th>
+							<th>Rs (Giá)</th>
+							<th>Tín hiệu</th>
+						</tr>
+					</thead>
+					<tbody id="nas-tbody">
+						<tr>
+							<td
+								colspan="8"
+								style="
+									text-align: center;
+									padding: 40px;
+									font-family: var(--mono);
+									font-size: 11px;
+									color: var(--muted);
+								">
+								Đang chờ dữ liệu từ backend — kết nối API để hiển thị bảng NAS
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="nas-legend">
+				<div class="leg">
+					<div class="leg-dot" style="background: var(--accent)"></div>
+					Score 70–100: NAS dương mạnh — MUA
+				</div>
+				<div class="leg">
+					<div class="leg-dot" style="background: var(--warn)"></div>
+					Score 50–69: NAS trung tính — THEO DÕI
+				</div>
+				<div class="leg">
+					<div class="leg-dot" style="background: var(--danger)"></div>
+					Score &lt;50: NAS âm — BÁN / KHỐNG
+				</div>
+			</div>
+		</section>
+
+		<!-- FOOTER -->
+		<footer>
+			<div>
+				<div
+					style="
+						font-family: var(--display);
+						font-size: 20px;
+						color: var(--accent);
+						margin-bottom: 6px;
+					">
+					UDS
+				</div>
+				<p
+					style="
+						font-family: var(--mono);
+						font-size: 11px;
+						color: var(--muted);
+						margin-bottom: 12px;
+					">
+					Unpriced Data Systems
+				</p>
+				<p>
+					Hệ thống thông tin dữ liệu hỗ trợ đầu tư và giao dịch chứng khoán Việt
+					Nam.
+				</p>
+			</div>
+			<div>
+				<h4>Điều hướng</h4>
+				<ul>
+					<li><a href="#gioi-thieu">01 / Giới thiệu & Bối cảnh</a></li>
+					<li><a href="#ma-co-phieu">02 / Tra cứu mã CP</a></li>
+					<li><a href="#vnindex">03 / Phân tích VNIndex</a></li>
+					<li><a href="#nas-danh-gia">04 / Chỉ số NAS</a></li>
+				</ul>
+			</div>
+			<div>
+				<h4>Pháp lý</h4>
+				<p>
+					Nội dung chỉ mang tính tham khảo, không phải tư vấn đầu tư. Mọi quyết
+					định đầu tư thuộc trách nhiệm của nhà đầu tư.
+				</p>
+			</div>
+		</footer>
+		<div class="foot-bot">
+			<p>© 2026 UDS — Unpriced Data Systems</p>
+			<p>Dữ liệu có độ trễ · Không phải công ty chứng khoán</p>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>
